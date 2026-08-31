@@ -65,6 +65,7 @@
 #include <policy/fees.h>
 #include <policy/fees_args.h>
 #include <policy/policy.h>
+#include <policy/antispam.h>
 #include <policy/settings.h>
 #include <protocol.h>
 #include <rpc/blockchain.h>
@@ -707,6 +708,7 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
                              DEFAULT_ACCEPT_NON_STD_DATACARRIER),
                    ArgsManager::ALLOW_ANY, OptionsCategory::NODE_RELAY);
     argsman.AddArg("-acceptnonstdtxn", strprintf("Relay and mine \"non-standard\" transactions (default: %u)", DEFAULT_ACCEPT_NON_STD_TXN), ArgsManager::ALLOW_ANY, OptionsCategory::NODE_RELAY);
+    SetupAntiSpamArgs(argsman);
     argsman.AddArg("-acceptunknownwitness",
                    strprintf("Relay transactions sending to unknown/future witness script versions (default: %u)", DEFAULT_ACCEPTUNKNOWNWITNESS),
                    ArgsManager::ALLOW_ANY,
@@ -1212,6 +1214,7 @@ bool AppInitParameterInteraction(const ArgsManager& args)
     }
 
     g_script_size_policy_limit = args.GetIntArg("-maxscriptsize", g_script_size_policy_limit);
+    InitAntiSpamFromArgs(args);
 
     nBytesPerSigOp = args.GetIntArg("-bytespersigop", nBytesPerSigOp);
     nBytesPerSigOpStrict = args.GetIntArg("-bytespersigopstrict", nBytesPerSigOpStrict);

@@ -35,6 +35,7 @@
 #include <policy/coin_age_priority.h>
 #include <policy/ephemeral_policy.h>
 #include <policy/policy.h>
+#include <policy/antispam.h>
 #include <policy/rbf.h>
 #include <policy/settings.h>
 #include <policy/truc_policy.h>
@@ -847,8 +848,15 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     // Rather not work on nonstandard transactions (unless -testnet/-regtest)
     std::string reason;
-    if (m_pool.m_opts.require_standard && !IsStandardTx(tx, m_pool.m_opts, reason, ignore_rejects)) {
-        return state.Invalid(TxValidationResult::TX_NOT_STANDARD, reason);
+    if (m_pool.m_opts.require_standard) {
+        // Merge in this node's local anti-spam policy opt-outs (rules 3/4/6; see
+        // GetAntiSpamIgnoredRejects()) on top of whatever the caller already specified.
+        ignore_rejects_type merged_ignore_rejects{ignore_rejects};
+        const auto antispam_ignored{GetAntiSpamIgnoredRejects()};
+        merged_ignore_rejects.insert(antispam_ignored.begin(), antispam_ignored.end());
+        if (!IsStandardTx(tx, m_pool.m_opts, reason, merged_ignore_rejects)) {
+            return state.Invalid(TxValidationResult::TX_NOT_STANDARD, reason);
+        }
     }
 
     // Transactions smaller than 65 non-witness bytes are not relayed to mitigate CVE-2017-12842.
@@ -1441,16 +1449,26 @@ bool MemPoolAccept::PackageMempoolChecks(const ATMPArgs& args, const std::vector
     return true;
 }
 
-unsigned int PolicyScriptVerifyFlags(const ignore_rejects_type& ignore_rejects)
+unsigned int PolicyScriptVerifyFlags(const ignore_rejects_type& ignore_rejects_in)
 {
+    // Merge in this node's local anti-spam policy opt-outs (rules 3/4/6 reuse
+    // these existing ignore_rejects keys; see GetAntiSpamIgnoredRejects()).
+    ignore_rejects_type ignore_rejects{ignore_rejects_in};
+    {
+        const auto antispam_ignored{GetAntiSpamIgnoredRejects()};
+        ignore_rejects.insert(antispam_ignored.begin(), antispam_ignored.end());
+    }
+    // Anti-spam policy rule 7: OR in SCRIPT_VERIFY_DISCOURAGE_TAPSCRIPT_IF unless disabled.
+    const unsigned int antispam_flags{GetAntiSpamScriptVerifyFlags()};
+
     if (ignore_rejects.empty()) {
-        return STANDARD_SCRIPT_VERIFY_FLAGS;
+        return STANDARD_SCRIPT_VERIFY_FLAGS | antispam_flags;
     }
     if (ignore_rejects.count("non-mandatory-script-verify-flag")) {
         return MANDATORY_SCRIPT_VERIFY_FLAGS;
     }
 
-    unsigned int flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+    unsigned int flags = STANDARD_SCRIPT_VERIFY_FLAGS | antispam_flags;
     if (ignore_rejects.count("non-mandatory-script-verify-flag-upgradable")) {
         constexpr unsigned int upgradable_policy_flags =
             SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS |
