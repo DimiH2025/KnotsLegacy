@@ -79,6 +79,8 @@ std::string ScriptErrorString(const ScriptError serror)
             return "OP_SUCCESSx reserved for soft-fork upgrades";
         case SCRIPT_ERR_DISCOURAGE_UPGRADABLE_PUBKEYTYPE:
             return "Public key version reserved for soft-fork upgrades";
+        case SCRIPT_ERR_DISCOURAGE_TAPSCRIPT_IF:
+            return "OP_IF/OP_NOTIF in Tapscript discouraged by local anti-spam policy";
         case SCRIPT_ERR_PUBKEYTYPE:
             return "Public key is neither compressed or uncompressed";
         case SCRIPT_ERR_CLEANSTACK:

@@ -143,6 +143,12 @@ enum : uint32_t {
     // Making unknown public key versions (in BIP 342 scripts) non-standard
     SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE = (1U << 20),
 
+    // Anti-spam policy (non-consensus): discourage OP_IF/OP_NOTIF inside Tapscript.
+    // This is what blocks the OP_FALSE OP_IF ... OP_ENDIF "envelope" pattern used
+    // by Ordinals/inscriptions-style data embedding. Local relay/mining policy only.
+    //
+    SCRIPT_VERIFY_DISCOURAGE_TAPSCRIPT_IF = (1U << 21),
+
     // Constants to point to the highest flag in use. Add new flags above this line.
     //
     SCRIPT_VERIFY_END_MARKER

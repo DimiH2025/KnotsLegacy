@@ -616,6 +616,12 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                             if (vch.size() > 1 || (vch.size() == 1 && vch[0] != 1)) {
                                 return set_error(serror, SCRIPT_ERR_TAPSCRIPT_MINIMALIF);
                             }
+                            // Local anti-spam policy (non-consensus): discourage OP_IF/OP_NOTIF in
+                            // Tapscript entirely. This is what the "envelope" pattern used to embed
+                            // arbitrary data (Ordinals/inscriptions-style) relies on.
+                            if (flags & SCRIPT_VERIFY_DISCOURAGE_TAPSCRIPT_IF) {
+                                return set_error(serror, SCRIPT_ERR_DISCOURAGE_TAPSCRIPT_IF);
+                            }
                         }
                         // Under witness v0 rules it is only a policy rule, enabled through SCRIPT_VERIFY_MINIMALIF.
                         if (sigversion == SigVersion::WITNESS_V0 && (flags & SCRIPT_VERIFY_MINIMALIF)) {
