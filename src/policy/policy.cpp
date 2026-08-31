@@ -7,6 +7,7 @@
 
 #include <policy/policy.h>
 
+#include <policy/antispam.h>
 #include <coins.h>
 #include <consensus/amount.h>
 #include <consensus/consensus.h>
@@ -181,6 +182,14 @@ bool IsStandardTx(const CTransaction& tx, const kernel::MemPoolOptions& opts, st
 
         if (whichType == TxoutType::WITNESS_UNKNOWN && !opts.acceptunknownwitness) {
             MaybeReject("scriptpubkey-unknown-witnessversion");
+        }
+
+        // Anti-spam policy rule 1: non-OP_RETURN outputs with an oversized scriptPubKey
+        // are non-standard. OP_RETURN (NULL_DATA) outputs are exempt here since they're
+        // already governed separately by -datacarriersize/opts.max_datacarrier_bytes above.
+        if (g_antispam_limit_scriptpubkey_size && whichType != TxoutType::NULL_DATA
+            && txout.scriptPubKey.size() > ANTISPAM_MAX_SCRIPTPUBKEY_SIZE) {
+            MaybeReject("antispam-scriptpubkey-size");
         }
 
         if (whichType == TxoutType::ANCHOR && !opts.permitephemeral_anchor) {
@@ -438,6 +447,10 @@ bool IsWitnessStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs,
                     // Empty control block is invalid
                     out_reason = reason_prefix + "taproot-control-missing";
                     return false;
+                }
+                // Anti-spam policy rule 5: oversized control blocks are non-standard.
+                if (g_antispam_limit_control_block_size && control_block.size() > ANTISPAM_MAX_CONTROL_BLOCK_SIZE) {
+                    MaybeReject("antispam-control-block-size");
                 }
                 if ((control_block[0] & TAPROOT_LEAF_MASK) == TAPROOT_LEAF_TAPSCRIPT) {
                     // Leaf version 0xc0 (aka Tapscript, see BIP 342)
