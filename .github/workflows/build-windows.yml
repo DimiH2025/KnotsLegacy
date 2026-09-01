@@ -1,0 +1,79 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [legacy]
+  pull_request:
+    branches: [legacy]
+  workflow_dispatch: {}
+
+jobs:
+  build-windows:
+    name: Windows x86_64 (mingw-w64 cross-compile)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake pkgconf curl patch make bison \
+            python3 xz-utils \
+            g++-mingw-w64-x86-64-posix \
+            nsis \
+            librsvg2-bin imagemagick
+
+      - name: Select POSIX mingw toolchain alternative
+        run: |
+          # Ubuntu ships both a win32 and posix pthread variant of mingw-w64 g++;
+          # depends/ needs the posix one for C++11 threading support.
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix || true
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix || true
+
+      - name: Cache depends
+        uses: actions/cache@v4
+        with:
+          path: depends/built
+          key: depends-win64-${{ hashFiles('depends/packages/*.mk', 'depends/Makefile') }}
+
+      # Builds all third-party dependencies (Qt, Boost, libevent, etc.) for the
+      # win64 target and produces depends/x86_64-w64-mingw32/toolchain.cmake.
+      - name: Build depends (win64)
+        run: make -C depends HOST=x86_64-w64-mingw32 -j "$(nproc)"
+
+      # Same BUILD_GUI pitfall as the Linux build: it defaults OFF and must be
+      # passed explicitly or bitcoin-qt.exe (and the installer, which depends
+      # on it) silently won't be built.
+      - name: Configure
+        run: |
+          cmake -B build \
+            --toolchain depends/x86_64-w64-mingw32/toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_GUI=ON
+
+      - name: Build
+        run: cmake --build build -j "$(nproc)"
+
+      - name: Build NSIS installer
+        run: cmake --build build -j "$(nproc)" --target deploy
+
+      - name: Locate installer
+        id: find_installer
+        run: |
+          installer=$(find build -maxdepth 1 -name '*-setup.exe' | head -n1)
+          if [ -z "$installer" ]; then
+            echo "::error::No *-setup.exe found in build/ - deploy target may have failed silently."
+            exit 1
+          fi
+          echo "path=$installer" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: knots-legacy-win64-setup
+          path: ${{ steps.find_installer.outputs.path }}
+          if-no-files-found: error

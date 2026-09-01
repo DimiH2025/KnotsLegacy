@@ -1,0 +1,93 @@
+name: Build macOS
+
+on:
+  push:
+    branches: [legacy]
+  pull_request:
+    branches: [legacy]
+  workflow_dispatch: {}
+
+jobs:
+  build-macos:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 150
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            name: macOS (Apple Silicon, arm64)
+            artifact: knots-legacy-macos-arm64
+          - runner: macos-15-intel
+            name: macOS (Intel, x86_64)
+            artifact: knots-legacy-macos-x86_64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Homebrew packages
+        env:
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
+        run: |
+          brew install --quiet python@3 || brew link --overwrite python@3
+          brew install --quiet coreutils ninja pkgconf ccache boost libevent \
+            zeromq qt@5 qrencode imagemagick libicns librsvg
+
+      - name: Set Ccache directory
+        run: echo "CCACHE_DIR=${RUNNER_TEMP}/ccache_dir" >> "$GITHUB_ENV"
+
+      - name: Restore Ccache cache
+        id: ccache-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ github.job }}-${{ matrix.artifact }}-ccache-${{ github.run_id }}
+          restore-keys: ${{ github.job }}-${{ matrix.artifact }}-ccache-
+
+      # Same BUILD_GUI pitfall as the other two platforms: it defaults OFF.
+      # Also point CMake at the Homebrew-installed qt@5 keg explicitly, since
+      # it's keg-only and not symlinked onto the default search path.
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_GUI=ON \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)"
+
+      - name: Build
+        run: cmake --build build -j "$(sysctl -n hw.logicalcpu)"
+
+      - name: Build .app bundle + zip
+        run: cmake --build build -j "$(sysctl -n hw.logicalcpu)" --target deploy
+
+      - name: Save Ccache cache
+        uses: actions/cache/save@v5
+        if: github.event_name != 'pull_request' && steps.ccache-cache.outputs.cache-hit != 'true'
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ github.job }}-${{ matrix.artifact }}-ccache-${{ github.run_id }}
+
+      - name: Locate zip
+        id: find_zip
+        run: |
+          zip_path=$(find build -maxdepth 1 -name '*.zip' | head -n1)
+          if [ -z "$zip_path" ]; then
+            echo "::error::No .zip found in build/ - deploy target may have failed silently."
+            exit 1
+          fi
+          echo "path=$zip_path" >> "$GITHUB_OUTPUT"
+
+      # Heads up: this produces an unsigned, unnotarized .zip. Recent macOS
+      # (Gatekeeper) will refuse to open it without a right-click > Open
+      # override, or `xattr -dr com.apple.quarantine` on the .app, unless it's
+      # signed with a paid Apple Developer ID and notarized separately - not
+      # set up here.
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ steps.find_zip.outputs.path }}
+          if-no-files-found: error

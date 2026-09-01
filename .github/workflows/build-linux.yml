@@ -1,0 +1,65 @@
+name: Build Linux
+
+on:
+  push:
+    branches: [legacy]
+  pull_request:
+    branches: [legacy]
+  workflow_dispatch: {}
+
+jobs:
+  build-linux:
+    name: Linux x86_64 (native)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake pkgconf python3 \
+            libevent-dev libboost-dev \
+            libsqlite3-dev \
+            libzmq3-dev \
+            qtbase5-dev qttools5-dev qttools5-dev-tools \
+            librsvg2-bin imagemagick \
+            libqrencode-dev
+
+      # NOTE: this bit Bit-Block once already — BUILD_GUI defaults OFF in this
+      # codebase's CMakeLists.txt and is not auto-enabled, so bitcoin-qt silently
+      # won't be built unless this flag is passed explicitly.
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_GUI=ON \
+            -DWITH_ZMQ=ON \
+            -DWITH_SQLITE=ON
+
+      - name: Build
+        run: cmake --build build -j "$(nproc)"
+
+      - name: Strip binaries
+        run: |
+          mkdir -p dist/knots-legacy-linux-x86_64/bin
+          for f in bitcoind bitcoin-cli bitcoin-tx bitcoin-util bitcoin-wallet bitcoin-qt; do
+            if [ -f "build/bin/$f" ]; then
+              strip -s "build/bin/$f" -o "dist/knots-legacy-linux-x86_64/bin/$f"
+            fi
+          done
+
+      - name: Package tarball
+        run: |
+          cp README.md COPYING dist/knots-legacy-linux-x86_64/ 2>/dev/null || true
+          tar -C dist -czf knots-legacy-linux-x86_64.tar.gz knots-legacy-linux-x86_64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: knots-legacy-linux-x86_64
+          path: knots-legacy-linux-x86_64.tar.gz
+          if-no-files-found: error
