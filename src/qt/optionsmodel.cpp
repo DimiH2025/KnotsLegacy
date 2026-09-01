@@ -18,8 +18,8 @@
 #include <interfaces/node.h>
 #include <kernel/mempool_options.h> // for DEFAULT_MAX_MEMPOOL_SIZE_MB, DEFAULT_MEMPOOL_EXPIRY_HOURS
 #include <mapport.h>
+#include <policy/antispam.h>
 #include <policy/settings.h>
-#include <net.h>
 #include <net_processing.h>
 #include <netbase.h>
 #include <node/caches.h>
@@ -92,6 +92,13 @@ static const char* SettingName(OptionsModel::OptionID option)
     case OptionsModel::rejectparasites: return "rejectparasites";
     case OptionsModel::rejecttokens: return "rejecttokens";
     case OptionsModel::subdustfeepenalty: return "subdustfeepenalty";
+    case OptionsModel::antispamscriptpubkeysize: return "antispamscriptpubkeysize";
+    case OptionsModel::antispampushdatasize: return "antispampushdatasize";
+    case OptionsModel::antispamwitnessversion: return "antispamwitnessversion";
+    case OptionsModel::antispamtaprootannex: return "antispamtaprootannex";
+    case OptionsModel::antispamcontrolblocksize: return "antispamcontrolblocksize";
+    case OptionsModel::antispamopsuccess: return "antispamopsuccess";
+    case OptionsModel::antispamtapscriptif: return "antispamtapscriptif";
     case OptionsModel::rejectspkreuse: return "rejectspkreuse";
     case OptionsModel::minrelaytxfee: return "minrelaytxfee";
     case OptionsModel::minrelaycoinblocks: return "minrelaycoinblocks";
@@ -733,6 +740,20 @@ QVariant OptionsModel::getOption(OptionID option, const std::string& suffix) con
         return node().mempool().m_opts.reject_tokens;
     case subdustfeepenalty:
         return node().mempool().m_opts.subdustfeepenalty;
+    case antispamscriptpubkeysize:
+        return g_antispam_limit_scriptpubkey_size;
+    case antispampushdatasize:
+        return g_antispam_limit_pushdata_size;
+    case antispamwitnessversion:
+        return g_antispam_reject_undefined_witness_version;
+    case antispamtaprootannex:
+        return g_antispam_reject_taproot_annex;
+    case antispamcontrolblocksize:
+        return g_antispam_limit_control_block_size;
+    case antispamopsuccess:
+        return g_antispam_reject_op_success;
+    case antispamtapscriptif:
+        return g_antispam_reject_tapscript_if;
     case rejectspkreuse:
         return f_rejectspkreuse;
     case minrelaytxfee:
@@ -1259,6 +1280,69 @@ bool OptionsModel::setOption(OptionID option, const QVariant& value, const std::
             const bool nv = value.toBool();
             node().mempool().m_opts.subdustfeepenalty = nv;
             node().updateRwSetting("subdustfeepenalty", nv);
+        }
+        break;
+    }
+    case antispamscriptpubkeysize:
+    {
+        if (changed()) {
+            const bool nv = value.toBool();
+            g_antispam_limit_scriptpubkey_size = nv;
+            node().updateRwSetting("antispamscriptpubkeysize", nv);
+        }
+        break;
+    }
+    case antispampushdatasize:
+    {
+        if (changed()) {
+            const bool nv = value.toBool();
+            g_antispam_limit_pushdata_size = nv;
+            node().updateRwSetting("antispampushdatasize", nv);
+        }
+        break;
+    }
+    case antispamwitnessversion:
+    {
+        if (changed()) {
+            const bool nv = value.toBool();
+            g_antispam_reject_undefined_witness_version = nv;
+            node().updateRwSetting("antispamwitnessversion", nv);
+        }
+        break;
+    }
+    case antispamtaprootannex:
+    {
+        if (changed()) {
+            const bool nv = value.toBool();
+            g_antispam_reject_taproot_annex = nv;
+            node().updateRwSetting("antispamtaprootannex", nv);
+        }
+        break;
+    }
+    case antispamcontrolblocksize:
+    {
+        if (changed()) {
+            const bool nv = value.toBool();
+            g_antispam_limit_control_block_size = nv;
+            node().updateRwSetting("antispamcontrolblocksize", nv);
+        }
+        break;
+    }
+    case antispamopsuccess:
+    {
+        if (changed()) {
+            const bool nv = value.toBool();
+            g_antispam_reject_op_success = nv;
+            node().updateRwSetting("antispamopsuccess", nv);
+        }
+        break;
+    }
+    case antispamtapscriptif:
+    {
+        if (changed()) {
+            const bool nv = value.toBool();
+            g_antispam_reject_tapscript_if = nv;
+            node().updateRwSetting("antispamtapscriptif", nv);
         }
         break;
     }

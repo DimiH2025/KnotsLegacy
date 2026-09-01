@@ -139,6 +139,13 @@ private:
     QCheckBox *rejectparasites;
     QCheckBox *rejecttokens;
     QCheckBox *subdustfeepenalty;
+    QCheckBox *antispamscriptpubkeysize;
+    QCheckBox *antispampushdatasize;
+    QCheckBox *antispamwitnessversion;
+    QCheckBox *antispamtaprootannex;
+    QCheckBox *antispamcontrolblocksize;
+    QCheckBox *antispamopsuccess;
+    QCheckBox *antispamtapscriptif;
     QCheckBox *rejectspkreuse;
     BitcoinAmountField *minrelaytxfee;
     BitcoinAmountField *minrelaycoinblocks;

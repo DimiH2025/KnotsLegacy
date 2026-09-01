@@ -17,6 +17,7 @@
 #include <common/args.h>
 #include <common/system.h>
 #include <consensus/consensus.h> // for MAX_BLOCK_SERIALIZED_SIZE
+#include <policy/antispam.h>
 #include <index/blockfilterindex.h>
 #include <interfaces/node.h>
 #include <netbase.h>
@@ -420,6 +421,53 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet)
     subdustfeepenalty->setToolTip(tr("For each output below the dust threshold, reduce the transaction's effective fee by the difference between the dust threshold and the output value. This makes transactions creating dust outputs require higher fees to be relayed and mined."));
     verticalLayout_Spamfiltering->addWidget(subdustfeepenalty);
     FixTabOrder(subdustfeepenalty);
+
+    QLabel * const labelAntiSpamHeading = new QLabel(groupBox_Spamfiltering);
+    labelAntiSpamHeading->setText(tr("Anti-spam (data-embedding) rules"));
+    labelAntiSpamHeading->setToolTip(tr("These rules mirror the content of BIP-110's proposed anti-spam measures, applied here purely as this node's own local relay/mining policy. They only affect what this node relays and mines; they never change which blocks this node considers valid, and disabling any of them cannot cause your node to diverge from consensus."));
+    verticalLayout_Spamfiltering->addWidget(labelAntiSpamHeading);
+
+    antispamscriptpubkeysize = new QCheckBox(groupBox_Spamfiltering);
+    antispamscriptpubkeysize->setText(tr("Reject oversized non-OP_RETURN outputs"));
+    antispamscriptpubkeysize->setToolTip(tr("Treat non-OP_RETURN outputs with a scriptPubKey larger than %1 bytes as non-standard.").arg(ANTISPAM_MAX_SCRIPTPUBKEY_SIZE));
+    verticalLayout_Spamfiltering->addWidget(antispamscriptpubkeysize);
+    FixTabOrder(antispamscriptpubkeysize);
+
+    antispampushdatasize = new QCheckBox(groupBox_Spamfiltering);
+    antispampushdatasize->setText(tr("Reject oversized script pushes"));
+    antispampushdatasize->setToolTip(tr("Treat oversized scriptSig pushes and witness stack items as non-standard (P2SH redeemScript is exempt)."));
+    verticalLayout_Spamfiltering->addWidget(antispampushdatasize);
+    FixTabOrder(antispampushdatasize);
+
+    antispamwitnessversion = new QCheckBox(groupBox_Spamfiltering);
+    antispamwitnessversion->setText(tr("Reject undefined witness versions"));
+    antispamwitnessversion->setToolTip(tr("Treat witness versions with no defined semantics (v2-v16) as non-standard."));
+    verticalLayout_Spamfiltering->addWidget(antispamwitnessversion);
+    FixTabOrder(antispamwitnessversion);
+
+    antispamtaprootannex = new QCheckBox(groupBox_Spamfiltering);
+    antispamtaprootannex->setText(tr("Reject Taproot annex"));
+    antispamtaprootannex->setToolTip(tr("Treat presence of a Taproot annex as non-standard."));
+    verticalLayout_Spamfiltering->addWidget(antispamtaprootannex);
+    FixTabOrder(antispamtaprootannex);
+
+    antispamcontrolblocksize = new QCheckBox(groupBox_Spamfiltering);
+    antispamcontrolblocksize->setText(tr("Reject oversized Taproot control blocks"));
+    antispamcontrolblocksize->setToolTip(tr("Treat Taproot control blocks larger than %1 bytes as non-standard.").arg(ANTISPAM_MAX_CONTROL_BLOCK_SIZE));
+    verticalLayout_Spamfiltering->addWidget(antispamcontrolblocksize);
+    FixTabOrder(antispamcontrolblocksize);
+
+    antispamopsuccess = new QCheckBox(groupBox_Spamfiltering);
+    antispamopsuccess->setText(tr("Reject unknown OP_SUCCESSx opcodes"));
+    antispamopsuccess->setToolTip(tr("Treat unrecognised OP_SUCCESSx opcodes as non-standard."));
+    verticalLayout_Spamfiltering->addWidget(antispamopsuccess);
+    FixTabOrder(antispamopsuccess);
+
+    antispamtapscriptif = new QCheckBox(groupBox_Spamfiltering);
+    antispamtapscriptif->setText(tr("Reject OP_IF/OP_NOTIF in Tapscript (blocks data-embedding \"envelopes\")"));
+    antispamtapscriptif->setToolTip(tr("Treat OP_IF/OP_NOTIF inside Tapscript as non-standard. This is what blocks the OP_FALSE OP_IF ... OP_ENDIF \"envelope\" pattern used to embed arbitrary data (e.g. Ordinals/inscriptions). Note: this also affects legitimate Tapscript contracts that use conditional branches, such as some HTLC constructions."));
+    verticalLayout_Spamfiltering->addWidget(antispamtapscriptif);
+    FixTabOrder(antispamtapscriptif);
 
     minrelaytxfee = new BitcoinAmountField(groupBox_Spamfiltering);
     CreateOptionUI(verticalLayout_Spamfiltering, minrelaytxfee, tr("Ignore transactions offering miners less than %s per kvB in transaction fees."));
@@ -947,6 +995,13 @@ void OptionsDialog::setMapper()
     mapper->addMapping(rejectparasites, OptionsModel::rejectparasites);
     mapper->addMapping(rejecttokens, OptionsModel::rejecttokens);
     mapper->addMapping(subdustfeepenalty, OptionsModel::subdustfeepenalty);
+    mapper->addMapping(antispamscriptpubkeysize, OptionsModel::antispamscriptpubkeysize);
+    mapper->addMapping(antispampushdatasize, OptionsModel::antispampushdatasize);
+    mapper->addMapping(antispamwitnessversion, OptionsModel::antispamwitnessversion);
+    mapper->addMapping(antispamtaprootannex, OptionsModel::antispamtaprootannex);
+    mapper->addMapping(antispamcontrolblocksize, OptionsModel::antispamcontrolblocksize);
+    mapper->addMapping(antispamopsuccess, OptionsModel::antispamopsuccess);
+    mapper->addMapping(antispamtapscriptif, OptionsModel::antispamtapscriptif);
     mapper->addMapping(rejectspkreuse, OptionsModel::rejectspkreuse);
     mapper->addMapping(minrelaytxfee, OptionsModel::minrelaytxfee);
     mapper->addMapping(minrelaycoinblocks, OptionsModel::minrelaycoinblocks);

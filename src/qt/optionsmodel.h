@@ -92,6 +92,13 @@ public:
         rejectparasites,        // bool
         rejecttokens,           // bool
         subdustfeepenalty,      // bool
+        antispamscriptpubkeysize, // bool
+        antispampushdatasize,   // bool
+        antispamwitnessversion, // bool
+        antispamtaprootannex,   // bool
+        antispamcontrolblocksize, // bool
+        antispamopsuccess,      // bool
+        antispamtapscriptif,    // bool
         rejectspkreuse,         // bool
         minrelaytxfee,
         minrelaycoinblocks,
