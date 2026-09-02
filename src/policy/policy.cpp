@@ -184,10 +184,15 @@ bool IsStandardTx(const CTransaction& tx, const kernel::MemPoolOptions& opts, st
             MaybeReject("scriptpubkey-unknown-witnessversion");
         }
 
-        // Anti-spam policy rule 1: non-OP_RETURN outputs with an oversized scriptPubKey
-        // are non-standard. OP_RETURN (NULL_DATA) outputs are exempt here since they're
-        // already governed separately by -datacarriersize/opts.max_datacarrier_bytes above.
-        if (g_antispam_limit_scriptpubkey_size && whichType != TxoutType::NULL_DATA
+        // Anti-spam policy rule 1: oversized scriptPubKeys of an UNRECOGNIZED
+        // shape are non-standard. Scoped to TxoutType::NONSTANDARD only —
+        // every other recognized standard type (PUBKEY, MULTISIG, witness
+        // programs, etc.) already has its own purpose-built size governance
+        // elsewhere in this function, and legitimately exceeds 34 bytes on its
+        // own (e.g. a bare PUBKEY output is 35 bytes for a compressed key).
+        // Applying this cap to those types as well broke standard bare-pubkey/
+        // bare-multisig outputs — caught by script_p2sh_tests in CI.
+        if (g_antispam_limit_scriptpubkey_size && whichType == TxoutType::NONSTANDARD
             && txout.scriptPubKey.size() > ANTISPAM_MAX_SCRIPTPUBKEY_SIZE) {
             MaybeReject("antispam-scriptpubkey-size");
         }
