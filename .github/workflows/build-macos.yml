@@ -41,7 +41,7 @@ jobs:
 
       - name: Restore Ccache cache
         id: ccache-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ${{ github.job }}-${{ matrix.artifact }}-ccache-${{ github.run_id }}
@@ -86,7 +86,7 @@ jobs:
       # signed with a paid Apple Developer ID and notarized separately - not
       # set up here.
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact }}
           path: ${{ steps.find_zip.outputs.path }}
