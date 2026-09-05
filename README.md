@@ -3,25 +3,25 @@ KNOTS LEGACY
 
 [https://bitcoinknots.org](https://bit-block.org/knots-legacy/)
 
-For an immediately usable, binary version of the Bitcoin Knots software, see
+For an immediately usable, binary version of the Knots Legacy software, see
 the website.
 
 What is Bitcoin Knots (Now Knots Legacy)?
 ----------------------
 
-Bitcoin Knots connects to the Bitcoin peer-to-peer network to download and fully
+Knots Legacy connects to the Bitcoin peer-to-peer network to download and fully
 validate blocks and transactions. It also includes a wallet and graphical user
 interface, which can be optionally built. Originally built and maintained by Luke DashJr. 
 
 With the BIP110 activation failure and subsequent hardfork of Bitcoin BLAKE2B was it mentioned that Bitcoin Knots would no longer be maintained on legacy Bitcoin. 
-For this reason was a fork of the repository of Bitcoin Knots made by Dimi_H so that Bitcoin users who are not willing to support the hardfork can still use Knots (legacy) on Bitcoin itseld. 
+For this reason was a fork of the repository of Bitcoin Knots made by Dimi_H so that Bitcoin users who are not willing to support the hardfork can still use Knots (legacy) on Bitcoin itself. 
 
 Further information about Knots Legacy is available in the [doc folder](/doc).
 
 License
 -------
 
-Bitcoin Knots is released under the terms of the MIT license. See [COPYING](COPYING) for more
+Knots Legacy is released under the terms of the MIT license. See [COPYING](COPYING) for more
 information or see https://opensource.org/licenses/MIT.
 
 Development Process
