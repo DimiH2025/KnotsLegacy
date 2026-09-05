@@ -21,6 +21,7 @@ Knots Legacy is a continuation from Bitcoin Knots v29.3.knots20260507 with full 
 
 Bitcoin Knots v29.3.knots20260507 was the last non-RDTS version available and maintained by Luke DashJr. 
 All subsequent versions are the BIP110 signalling versions which will stall at block 961,639 on August 8, 2026. 
+
 Subsequent versions of Bitcoin Knots ONLY support Bitcoin on the BLAKE2B chain (forked chain) and not the main Bitcoin chain. 
 Knots Legacy allows for interaction with Bitcoin mainchain and will not stall at block 961,639. 
 
