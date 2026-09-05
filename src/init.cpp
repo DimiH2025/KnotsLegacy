@@ -1576,67 +1576,12 @@ static ChainstateLoadResult InitAndLoadChainstate(
 
 bool UserProtocolRulesCheck()
 {
-    const auto rules_requested{gArgs.GetArgs(CONSENSUSRULES_CONFIG_NAME)};
-    if (rules_requested.empty()) {
-        return true;
-    }
-    return InitError(strprintf(_("Unknown rule specified in -%s: %s"), CONSENSUSRULES_CONFIG_NAME, rules_requested.front()));
+    return true;
 }
 
 bool UserProtocolRulesConsent()
 {
-    static const std::string CONSENSUSRULES_MISSING{"rdts"};
-    bool require_rdts{false};
-    for (const auto& rulesok : gArgs.GetArgs(CONSENSUSRULES_CONFIG_NAME)) {
-        if (rulesok == CONSENSUSRULES_MISSING) {
-            LogPrintf("User already consented to '%s' consensus rules\n", CONSENSUSRULES_MISSING);
-            require_rdts = true;
-            break;
-        }
-    }
-
-    bilingual_str msg = strprintf(_(
-        "Upcoming BIP110/RDTS Network Upgrade\n"
-        "\n"
-        "This version of %s does not support the upcoming BIP110 (RDTS) network upgrade, "
-        "which fixes critical vulnerabilities in long-standing network design.\n"
-        "\n"
-        "Important: "
-        "Because this upgrade already has broad community support, "
-        "continuing to run older versions (such as this version) does not reject it. "
-        "Running outdated software after any network upgrade only leaves your node vulnerable to displaying fake or fraudulent transactions. "
-        "To effectively reject this upgrade, you need to run alternative software designed to split away from the upgraded network.\n"
-        "\n"
-        "To adopt this upgrade and remain secure, please update %s: %s\n"
-        "\n"
-        "For more information, see: %s"
-    ),
-        CLIENT_NAME,
-        CLIENT_NAME,
-        CLIENT_URL,
-        "https://bitcoinknots.org/learn/2026-rdts");
-    if (require_rdts) {
-        const bilingual_str msg_config_suffix = strprintf(_(
-            "Note: "
-            "The %s flag was found in your configuration. "
-            "This outdated version cannot support the RDTS upgrade and will not start with this flag present. "
-            "Please update %s to adopt this upgrade. "
-            "You should remove this flag only if you intentionally wish to leave your node vulnerable."
-        ),
-            CONSENSUSRULES_CONFIG_NAME + "=" + CONSENSUSRULES_MISSING,
-            CLIENT_NAME);
-        msg += Untranslated("\n\n") + msg_config_suffix;
-    }
-
-    const bool consent = uiInterface.ThreadSafeQuestion(
-        _("Warning:") + Untranslated(" ") + msg,
-        msg.original
-        , "Warning",
-        require_rdts
-            ? (CClientUIInterface::ICON_WARNING | CClientUIInterface::BTN_ABORT | CClientUIInterface::MODAL)
-            : (CClientUIInterface::MSG_WARNING | CClientUIInterface::BTN_ABORT | CClientUIInterface::DEFAULT_TRUE));
-
-    return consent;
+    return true;
 }
 
 bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
@@ -1720,12 +1665,6 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     if (!UserProtocolRulesCheck()) {
         return false;
     }
-
-    scheduler.scheduleEvery([]{
-        LogError("This version does not support the upcoming BIP110/RDTS network upgrade, and is therefore vulnerable to displaying fake or fraudulent transactions.\n");
-        LogError("For more information, see: %s\n", "https://bitcoinknots.org/learn/2026-rdts");
-        LogError("To adopt this upgrade and remain secure, please update %s: %s\n", CLIENT_NAME, CLIENT_URL);
-    }, std::chrono::hours{1});
 
     if (interfaces::Ipc* ipc = node.init->ipc()) {
         for (std::string address : gArgs.GetArgs("-ipcbind")) {
