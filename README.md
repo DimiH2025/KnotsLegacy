@@ -1,12 +1,12 @@
-Bitcoin Knots
+KNOTS LEGACY
 =============
 
-https://bitcoinknots.org
+[https://bitcoinknots.org](https://bit-block.org/knots-legacy/)
 
 For an immediately usable, binary version of the Bitcoin Knots software, see
 the website.
 
-What is Bitcoin Knots?
+What is Bitcoin Knots (Now Knots Legacy)?
 ----------------------
 
 Bitcoin Knots connects to the Bitcoin peer-to-peer network to download and fully
@@ -31,11 +31,12 @@ Even if your pull request to Core is closed, or if your feature is not
 suitable for Core (eg, because it builds on a feature not supported in Core;
 relies on centralised services; etc), it may still be eligible for inclusion
 in Bitcoin Knots. In this case, a pull request may be opened on the
-[Knots GitHub](https://github.com/bitcoinknots/bitcoin) for review and consideration.
+[Knots Legacy GitHub]((https://github.com/DimiH2025/KnotsLegacy)) for review and consideration.
 When accepted, you are expected to maintain the submitted branch in your own
-repository, and it will be automatically merged into new releases of Knots.
+repository, and it will be automatically merged into new releases of Knots Legacy.
 
-Developer IRC can be found on Freenode at #bitcoin-dev.
+Currently is Knots Legacy maintained by 1 person: [Dimi_h](https://x.com/Dimi_h). 
+I will do my best to keep all new releases as transparant as possible (do not trust, verify!)
 
 Testing
 -------
