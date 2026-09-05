@@ -11,9 +11,12 @@ What is Bitcoin Knots (Now Knots Legacy)?
 
 Bitcoin Knots connects to the Bitcoin peer-to-peer network to download and fully
 validate blocks and transactions. It also includes a wallet and graphical user
-interface, which can be optionally built.
+interface, which can be optionally built. Originally built and maintained by Luke DashJr. 
 
-Further information about Bitcoin Knots is available in the [doc folder](/doc).
+With the BIP110 activation failure and subsequent hardfork of Bitcoin BLAKE2B was it mentioned that Bitcoin Knots would no longer be maintained on legacy Bitcoin. 
+For this reason was a fork of the repository of Bitcoin Knots made by Dimi_H so that Bitcoin users who are not willing to support the hardfork can still use Knots (legacy) on Bitcoin itseld. 
+
+Further information about Knots Legacy is available in the [doc folder](/doc).
 
 License
 -------
@@ -25,18 +28,19 @@ Development Process
 -------------------
 
 Development generally takes place as part of [Bitcoin Core](https://github.com/bitcoin/bitcoin), and is merged into
-Knots for each release.
+Knots Legacy for each release.
 
 Even if your pull request to Core is closed, or if your feature is not
 suitable for Core (eg, because it builds on a feature not supported in Core;
 relies on centralised services; etc), it may still be eligible for inclusion
-in Bitcoin Knots. In this case, a pull request may be opened on the
+in Knots Legacy. In this case, a pull request may be opened on the
 [Knots Legacy GitHub]((https://github.com/DimiH2025/KnotsLegacy)) for review and consideration.
 When accepted, you are expected to maintain the submitted branch in your own
 repository, and it will be automatically merged into new releases of Knots Legacy.
 
 Currently is Knots Legacy maintained by 1 person: [Dimi_h](https://x.com/Dimi_h). 
-I will do my best to keep all new releases as transparant as possible (do not trust, verify!)
+I will do my best to keep all new releases as transparant as possible (do not trust, verify!). 
+Developers who want to help maintain this repo are free to apply. 
 
 Testing
 -------
