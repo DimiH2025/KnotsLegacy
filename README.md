@@ -17,6 +17,12 @@ With the BIP110 activation failure and subsequent hardfork of Bitcoin BLAKE2B wa
 For this reason was a fork of the repository of Bitcoin Knots made by Dimi_H so that Bitcoin users who are not willing to support the hardfork can still use Knots (legacy) on Bitcoin itself. 
 
 Further information about Knots Legacy is available in the [doc folder](/doc).
+Knots Legacy is a continuation from Bitcoin Knots v29.3.knots20260507 with full description of the alterations made here: [Knots Legacy changes](https://github.com/DimiH2025/KnotsLegacy/blob/legacy/doc/knots-legacy-changes.md)  
+
+Bitcoin Knots v29.3.knots20260507 was the last non-RDTS version available and maintained by Luke DashJr. 
+All subsequent versions are the BIP110 signalling versions which will stall at block 961,639 on August 8, 2026. 
+Subsequent versions of Bitcoin Knots ONLY support Bitcoin on the BLAKE2B chain (forked chain) and not the main Bitcoin chain. 
+Knots Legacy allows for interaction with Bitcoin mainchain and will not stall at block 961,639. 
 
 License
 -------
