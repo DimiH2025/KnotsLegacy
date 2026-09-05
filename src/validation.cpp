@@ -6699,7 +6699,6 @@ ChainstateManager::ChainstateManager(const util::SignalInterrupt& interrupt, Opt
       m_blockman{interrupt, std::move(blockman_options)},
       m_validation_cache{m_options.script_execution_cache_bytes, m_options.signature_cache_bytes}
 {
-    m_options.notifications.warningSet(kernel::Warning::RULES_NOT_ENFORCED, strprintf(_("Warning: This outdated version does not support the BIP110/RDTS upgrade, and is therefore vulnerable to displaying fake or fraudulent transactions. Please update: %s"), CLIENT_URL));
 }
 
 ChainstateManager::~ChainstateManager()
