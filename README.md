@@ -1,7 +1,7 @@
 KNOTS LEGACY
 =============
 
-[https://bitcoinknots.org](https://bit-block.org/knots-legacy/)
+[https://bit-block.org/knots-legacy](https://bit-block.org/knots-legacy/)
 
 For an immediately usable, binary version of the Knots Legacy software, see
 the website.
