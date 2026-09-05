@@ -186,11 +186,7 @@ public:
     {
         args().WriteSettingsFile(/*errors=*/nullptr, /*backup=*/true);
         args().LockSettings([&](common::Settings& settings) {
-            std::map<std::string, common::SettingsValue> new_rw_settings;
-            if (auto it = settings.rw_settings.find(CONSENSUSRULES_CONFIG_NAME); it != settings.rw_settings.end()) {
-                new_rw_settings.emplace(it->first, std::move(it->second));
-            }
-            settings.rw_settings.swap(new_rw_settings);
+            settings.rw_settings.clear();
         });
         args().WriteSettingsFile();
     }
