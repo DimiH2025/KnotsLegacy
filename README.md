@@ -90,3 +90,18 @@ Translations are periodically pulled from Transifex and merged into the git repo
 
 **Important**: We do not accept translation changes as GitHub pull requests because the next
 pull from Transifex would automatically overwrite them again.
+
+
+Support
+------------
+
+Knots-Legacy is not funded by any organization.
+The committed work is entirely on a voluntary basis.
+If you’d like to donate and support (or give thanks to) the work done, you can do so here:
+
+Bitcoin: 
+<img width="226" height="232" alt="image" src="https://github.com/user-attachments/assets/270e6119-e6aa-4436-9565-5fdb1c7605c8" />
+
+PAYPAL: 
+<img width="253" height="254" alt="image" src="https://github.com/user-attachments/assets/bbfd3e9a-7d3b-459b-bcf4-60cb90b89842" />
+
