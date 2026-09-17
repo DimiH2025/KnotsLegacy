@@ -87,6 +87,7 @@ static const char* SettingName(OptionsModel::OptionID option)
     case OptionsModel::maxmempool: return "maxmempool";
     case OptionsModel::incrementalrelayfee: return "incrementalrelayfee";
     case OptionsModel::mempoolexpiry: return "mempoolexpiry";
+    case OptionsModel::Datum: return "datum";
     case OptionsModel::rejectunknownscripts: return "rejectunknownscripts";
     case OptionsModel::rejectunknownwitness: return "rejectunknownwitness";
     case OptionsModel::rejectparasites: return "rejectparasites";
@@ -710,6 +711,8 @@ QVariant OptionsModel::getOption(OptionID option, const std::string& suffix) con
         return SettingToBool(setting(), DEFAULT_LISTEN);
     case Server:
         return SettingToBool(setting(), false);
+    case Datum:
+        return SettingToBool(setting(), false);
     case MaskValues:
         return m_mask_values;
     case maxuploadtarget:
@@ -1102,6 +1105,12 @@ bool OptionsModel::setOption(OptionID option, const QVariant& value, const std::
         break;
     case Listen:
     case Server:
+        if (changed()) {
+            update(value.toBool());
+            setRestartRequired(true);
+        }
+        break;
+    case Datum:
         if (changed()) {
             update(value.toBool());
             setRestartRequired(true);

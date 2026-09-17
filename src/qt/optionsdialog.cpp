@@ -383,6 +383,12 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet)
     mempoolexpiry->setMaximum(std::numeric_limits<int>::max());
     CreateOptionUI(verticalLayout_Mempool, mempoolexpiry, tr("Do not keep transactions in memory more than %s hours"));
 
+    datum = new QCheckBox(tabMempool);
+    datum->setText(tr("Mine with DATUM"));
+    datum->setToolTip(tr("Apply DATUM Gateway's recommended settings for solo/small-pool block template construction: enables transaction indexing and RPC, leaves headroom below the maximum block size/weight for the pool's own coinbase transaction, and raises the mempool size and reconstruction-extra-transaction limits. Does not configure -blocknotify or RPC credentials, both of which are deployment-specific and must be set manually -- see DATUM Gateway's own documentation. Requires restart."));
+    verticalLayout_Mempool->addWidget(datum);
+    FixTabOrder(datum);
+
     verticalLayout_Mempool->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     /* Filters tab */
@@ -989,6 +995,7 @@ void OptionsDialog::setMapper()
     mapper->addMapping(maxmempool, OptionsModel::maxmempool);
     mapper->addMapping(incrementalrelayfee, OptionsModel::incrementalrelayfee);
     mapper->addMapping(mempoolexpiry, OptionsModel::mempoolexpiry);
+    mapper->addMapping(datum, OptionsModel::Datum);
 
     mapper->addMapping(rejectunknownscripts, OptionsModel::rejectunknownscripts);
     mapper->addMapping(rejectunknownwitness, OptionsModel::rejectunknownwitness);

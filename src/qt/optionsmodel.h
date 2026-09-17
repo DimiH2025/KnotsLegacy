@@ -87,6 +87,7 @@ public:
         maxmempool,
         incrementalrelayfee,
         mempoolexpiry,
+        Datum,
         rejectunknownscripts,   // bool
         rejectunknownwitness,   // bool
         rejectparasites,        // bool

@@ -133,6 +133,7 @@ private:
     BitcoinAmountField *incrementalrelayfee;
     QSpinBox *maxmempool;
     QSpinBox *mempoolexpiry;
+    QCheckBox *datum;
 
     QCheckBox *rejectunknownscripts;
     QCheckBox *rejectunknownwitness;
