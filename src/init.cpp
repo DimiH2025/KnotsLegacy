@@ -152,6 +152,7 @@ using util::ReplaceAll;
 using util::ToString;
 
 static constexpr bool DEFAULT_COREPOLICY{false};
+static constexpr bool DEFAULT_DATUM{false};
 static constexpr bool DEFAULT_PROXYRANDOMIZE{true};
 static constexpr bool DEFAULT_REST_ENABLE{false};
 static constexpr bool DEFAULT_I2P_ACCEPT_INCOMING{true};
@@ -514,6 +515,7 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     argsman.AddArg("-conf=<file>", strprintf("Specify path to read-only configuration file. Relative paths will be prefixed by datadir location (only useable from command line, not configuration file) (default: %s)", BITCOIN_CONF_FILENAME), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-confrw=<file>", strprintf("Specify read/write configuration file. Relative paths will be prefixed by the network-specific datadir location (default: %s)", BITCOIN_RW_CONF_FILENAME), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-corepolicy", strprintf("Use Bitcoin Core policy defaults (default: %u)", DEFAULT_COREPOLICY), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
+    argsman.AddArg("-datum", strprintf("Apply DATUM Gateway's recommended settings for solo/small-pool block template construction (default: %u). Does not set -blocknotify or RPC credentials, both of which are deployment-specific and must be configured manually; see DATUM Gateway's own documentation.", DEFAULT_DATUM), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-datadir=<dir>", "Specify data directory", ArgsManager::ALLOW_ANY | ArgsManager::DISALLOW_NEGATION, OptionsCategory::OPTIONS);
     argsman.AddArg("-dbbatchsize", strprintf("Maximum database write batch size in bytes (default: %u)", nDefaultDbBatchSize), ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::OPTIONS);
     argsman.AddArg("-dbcache=<n>", strprintf("Maximum database cache size <n> MiB (minimum %s, default is platform dependent, between %s and %s). Make sure you have enough RAM. In addition, unused memory allocated to the mempool is shared with this cache (see -maxmempool).", MIN_DBCACHE_BYTES / 1_MiB, MIN_DEFAULT_DBCACHE / 1_MiB, MAX_DEFAULT_DBCACHE / 1_MiB), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
@@ -650,6 +652,7 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     argsman.AddArg("-zmqpubrawtx=<address>", "Enable publish raw transaction in <address>", ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
     argsman.AddArg("-zmqpubrawwallettx=<address>", "Enable publish raw wallet transaction in <address>", ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
     argsman.AddArg("-zmqpubsequence=<address>", "Enable publish hash block and tx sequence in <address>", ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
+    argsman.AddArg("-zmqpubtemplatehint=<address>", "Enable publish of a rate-limited \"fresher block template may be available\" ping in <address>, fired on new mempool activity. Carries no payload beyond a timestamp; consumers should fetch a template via the normal getblocktemplate RPC afterward. Generic mechanism -- DATUM Gateway (github.com/OCEAN-xyz/datum_gateway) is the motivating use case, not a requirement.", ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
     argsman.AddArg("-zmqpubhashblockhwm=<n>", strprintf("Set publish hash block outbound message high water mark (default: %d)", CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM), ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
     argsman.AddArg("-zmqpubhashtxhwm=<n>", strprintf("Set publish hash transaction outbound message high water mark (default: %d)", CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM), ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
     argsman.AddArg("-zmqpubhashwallettxhwm=<n>", strprintf("Set publish hash wallet transaction outbound message high water mark (default: %d)", CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM), ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
@@ -657,6 +660,8 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     argsman.AddArg("-zmqpubrawtxhwm=<n>", strprintf("Set publish raw transaction outbound message high water mark (default: %d)", CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM), ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
     argsman.AddArg("-zmqpubrawwallettxhwm=<n>", strprintf("Set publish raw wallet transaction outbound message high water mark (default: %d)", CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM), ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
     argsman.AddArg("-zmqpubsequencehwm=<n>", strprintf("Set publish hash sequence message high water mark (default: %d)", CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM), ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
+    argsman.AddArg("-zmqpubtemplatehinthwm=<n>", strprintf("Set publish template hint outbound message high water mark (default: %d)", CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM), ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
+    argsman.AddArg("-zmqpubtemplatehintinterval=<ms>", "Minimum time in milliseconds between two published template hints (default: 1000)", ArgsManager::ALLOW_ANY, OptionsCategory::ZMQ);
 #else
     hidden_args.emplace_back("-zmqpubhashblock=<address>");
     hidden_args.emplace_back("-zmqpubhashtx=<address>");
@@ -665,6 +670,7 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     hidden_args.emplace_back("-zmqpubrawtx=<address>");
     hidden_args.emplace_back("-zmqpubrawwallettx=<address>");
     hidden_args.emplace_back("-zmqpubsequence=<n>");
+    hidden_args.emplace_back("-zmqpubtemplatehint=<address>");
     hidden_args.emplace_back("-zmqpubhashblockhwm=<n>");
     hidden_args.emplace_back("-zmqpubhashtxhwm=<n>");
     hidden_args.emplace_back("-zmqpubhashwallettxhwm=<n>");
@@ -672,6 +678,8 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     hidden_args.emplace_back("-zmqpubrawtxhwm=<n>");
     hidden_args.emplace_back("-zmqpubrawwallettxhwm=<n>");
     hidden_args.emplace_back("-zmqpubsequencehwm=<n>");
+    hidden_args.emplace_back("-zmqpubtemplatehinthwm=<n>");
+    hidden_args.emplace_back("-zmqpubtemplatehintinterval=<ms>");
 #endif
 
     argsman.AddArg("-checkblocks=<n>", strprintf("How many blocks to check at startup (default: %u, 0 = all)", DEFAULT_CHECKBLOCKS), ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::DEBUG_TEST);
@@ -883,6 +891,24 @@ void InitParameterInteraction(ArgsManager& args)
         args.SoftSetArg("-blockprioritysize", "0");
         args.SoftSetArg("-blockmaxsize", "4000000");
         args.SoftSetArg("-blockmaxweight", "4000000");
+    }
+
+    // DATUM Gateway (github.com/OCEAN-xyz/datum_gateway) recommended settings, for
+    // solo/small-pool miners building their own block templates. DATUM Gateway is a
+    // separate program connecting via getblocktemplate + blocknotify/ZMQ; this only
+    // bundles the node-side settings it documents as recommended. Deliberately does
+    // NOT set -blocknotify (deployment-specific shell command) or RPC credentials
+    // (a secret should never be silently generated by a preset flag) — both remain
+    // manual steps, see DATUM Gateway's own setup docs.
+    if (args.GetBoolArg("-datum", DEFAULT_DATUM)) {
+        args.SoftSetArg("-txindex", "1");
+        args.SoftSetArg("-server", "1");
+        // Deliberately below the ~4,000,000 consensus maximum, to leave headroom
+        // for the pool's own coinbase/generation transaction.
+        args.SoftSetArg("-blockmaxweight", "3985000");
+        args.SoftSetArg("-blockmaxsize", "3985000");
+        args.SoftSetArg("-maxmempool", "1000");
+        args.SoftSetArg("-blockreconstructionextratxn", "1000000");
     }
 
     // when specifying an explicit binding address, you want to listen on it
@@ -1419,6 +1445,7 @@ bool CheckHostPortOptions(const ArgsManager& args) {
         {"-zmqpubsequence",  true,                false},
         {"-zmqpubhashwallettx", true,             false},
         {"-zmqpubrawwallettx",  true,             false},
+        {"-zmqpubtemplatehint", true,             false},
     }) {
         for (const std::string& socket_addr : args.GetArgs(arg)) {
             const std::string param_value_hostport{
