@@ -58,6 +58,11 @@ public:
     // Notifies of transactions added to mempool or appearing in blocks
     virtual bool NotifyTransaction(const CTransaction &transaction);
     virtual bool NotifyWalletTransaction(const CTransaction &transaction, const uint256 &hashBlock);
+    // Rate-limited "a fresher block template may be worth pulling" wake-up ping.
+    // No meaningful payload — subscribers still fetch a real template via RPC.
+    // Generic mechanism; DATUM Gateway (github.com/OCEAN-xyz/datum_gateway) is the
+    // motivating use case, not a hard dependency of this notifier.
+    virtual bool NotifyTemplateHint();
 
 protected:
     void* psocket{nullptr};

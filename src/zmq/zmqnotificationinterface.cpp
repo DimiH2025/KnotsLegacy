@@ -58,6 +58,7 @@ std::unique_ptr<CZMQNotificationInterface> CZMQNotificationInterface::Create(std
     factories["pubrawtx"] = CZMQAbstractNotifier::Create<CZMQPublishRawTransactionNotifier>;
     factories["pubrawwallettx"] = CZMQAbstractNotifier::Create<CZMQPublishRawWalletTransactionNotifier>;
     factories["pubsequence"] = CZMQAbstractNotifier::Create<CZMQPublishSequenceNotifier>;
+    factories["pubtemplatehint"] = CZMQAbstractNotifier::Create<CZMQPublishTemplateHintNotifier>;
 
     std::list<std::unique_ptr<CZMQAbstractNotifier>> notifiers;
     for (const auto& entry : factories)
@@ -74,6 +75,10 @@ std::unique_ptr<CZMQNotificationInterface> CZMQNotificationInterface::Create(std
             notifier->SetType(entry.first);
             notifier->SetAddress(address);
             notifier->SetOutboundMessageHighWaterMark(static_cast<int>(gArgs.GetIntArg(arg + "hwm", CZMQAbstractNotifier::DEFAULT_ZMQ_SNDHWM)));
+            if (entry.first == "pubtemplatehint") {
+                auto* hint_notifier = static_cast<CZMQPublishTemplateHintNotifier*>(notifier.get());
+                hint_notifier->m_min_interval = std::chrono::milliseconds{gArgs.GetIntArg("-zmqpubtemplatehintinterval", 1000)};
+            }
             notifiers.push_back(std::move(notifier));
         }
     }
@@ -175,6 +180,15 @@ void CZMQNotificationInterface::TransactionAddedToMempool(const NewMempoolTransa
 
     TryForEachAndRemoveFailed(notifiers, [&tx, mempool_sequence](CZMQAbstractNotifier* notifier) {
         return notifier->NotifyTransaction(tx) && notifier->NotifyTransactionAcceptance(tx, mempool_sequence);
+    });
+
+    // Genuinely new mempool activity -- worth pinging template-hint subscribers.
+    // Deliberately not called from BlockConnected/BlockDisconnected below: those
+    // already have their own block-notification path, and re-added transactions
+    // from a disconnected block aren't "new" activity in the sense this hint is
+    // meant to signal.
+    TryForEachAndRemoveFailed(notifiers, [](CZMQAbstractNotifier* notifier) {
+        return notifier->NotifyTemplateHint();
     });
 }
 

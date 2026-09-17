@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <chrono>
 #include <functional>
 #include <vector>
 
@@ -82,6 +83,24 @@ public:
     bool NotifyBlockDisconnect(const CBlockIndex *pindex) override;
     bool NotifyTransactionAcceptance(const CTransaction &transaction, uint64_t mempool_sequence) override;
     bool NotifyTransactionRemoval(const CTransaction &transaction, uint64_t mempool_sequence) override;
+};
+
+// Rate-limited "a fresher block template may be worth pulling" wake-up ping.
+// Fires on every mempool-accepted transaction, but no-ops if fired again
+// before the configured minimum interval has passed. Payload is just an
+// 8-byte timestamp -- it is a wake-up signal, not a data feed; subscribers
+// still fetch a real template via the normal getblocktemplate RPC.
+class CZMQPublishTemplateHintNotifier : public CZMQAbstractPublishNotifier
+{
+private:
+    std::chrono::steady_clock::time_point m_last_sent{};
+
+public:
+    // Minimum time between two published hints. Configurable via
+    // -zmqpubtemplatehintinterval=<ms>; defaults to 1000ms.
+    std::chrono::milliseconds m_min_interval{1000};
+
+    bool NotifyTemplateHint() override;
 };
 
 #endif // BITCOIN_ZMQ_ZMQPUBLISHNOTIFIER_H

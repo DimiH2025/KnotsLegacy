@@ -49,6 +49,7 @@ static const char *MSG_RAWTX     = "rawtx";
 static const char *MSG_RAWWALLETTXMEMPOOL   = "rawwallettx-mempool";
 static const char *MSG_RAWWALLETTXBLOCK     = "rawwallettx-block";
 static const char *MSG_SEQUENCE  = "sequence";
+static const char *MSG_TEMPLATEHINT = "templatehint";
 
 // Internal function to send multipart message
 static int zmq_send_multipart(void *sock, const void* data, size_t size, ...)
@@ -337,4 +338,26 @@ bool CZMQPublishRawWalletTransactionNotifier::NotifyWalletTransaction(const CTra
         command = MSG_RAWWALLETTXMEMPOOL;
 
     return SendZmqMessage(command, &(*ss.begin()), ss.size());
+}
+
+bool CZMQPublishTemplateHintNotifier::NotifyTemplateHint()
+{
+    const auto now{std::chrono::steady_clock::now()};
+    if (m_last_sent.time_since_epoch().count() != 0 && now - m_last_sent < m_min_interval) {
+        // Rate-limited: a hint was already sent recently enough, skip this one.
+        return true;
+    }
+    m_last_sent = now;
+
+    // Payload is a wake-up ping, not a data feed: an 8-byte little-endian unix
+    // timestamp (milliseconds), useful only for a subscriber's own logging/
+    // staleness checks. Subscribers still fetch a real template via RPC.
+    const int64_t now_ms{std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count()};
+    uint8_t data[8];
+    for (unsigned int i = 0; i < 8; i++) {
+        data[i] = static_cast<uint8_t>(now_ms >> (8 * i));
+    }
+    LogDebug(BCLog::ZMQ, "Publish templatehint to %s\n", this->address);
+    return SendZmqMessage(MSG_TEMPLATEHINT, data, 8);
 }
