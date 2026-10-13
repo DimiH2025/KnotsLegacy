@@ -309,6 +309,19 @@ BOOST_AUTO_TEST_CASE(util_ReplaceAll)
     test_replaceall("%s", "foo", "A test \"foo\" string 'foo'.");
     test_replaceall("\"", "foo", "A test foo%sfoo string '%s'.");
     test_replaceall("'", "foo", "A test \"%s\" string foo%sfoo.");
+
+    // The substitute is literal text, never a regex/format string: sequences that
+    // std::regex_replace would expand ($', $&, $`, $1, $$) must pass through verbatim.
+    // (A wallet name containing "$'" previously altered the -walletnotify command.)
+    test_replaceall("%s", "$'", "A test \"$'\" string '$''.");
+    test_replaceall("%s", "$&", "A test \"$&\" string '$&'.");
+    test_replaceall("%s", "$`", "A test \"$`\" string '$`'.");
+    test_replaceall("%s", "$1", "A test \"$1\" string '$1'.");
+    test_replaceall("%s", "$$", "A test \"$$\" string '$$'.");
+
+    // Non-recursive: a substitute that itself contains the search string is not
+    // replaced again.
+    test_replaceall("%s", "%s%s", "A test \"%s%s\" string '%s%s'.");
 }
 
 BOOST_AUTO_TEST_CASE(util_TrimString)
