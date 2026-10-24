@@ -181,6 +181,21 @@ class DeploymentInfo(object):
                     return True
         return False
 
+def resolveRpath(token: str, binaryPath: str) -> Optional[str]:
+    """Resolve an "@rpath/<name>" reference to an existing file, or None."""
+    name = token[len("@rpath/"):]
+    dirs = [os.path.dirname(binaryPath), os.path.dirname(os.path.realpath(binaryPath))]
+    for var in ("DYLD_FALLBACK_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "DEPLOY_LIB_PATH"):
+        dirs += [d for d in os.getenv(var, "").split(":") if d]
+    for prefix in (os.getenv("HOMEBREW_PREFIX"), "/opt/homebrew", "/usr/local"):
+        if prefix:
+            dirs += [os.path.join(prefix, "lib"), os.path.join(prefix, "opt", "brotli", "lib")]
+    for d in dirs:
+        candidate = os.path.join(d, name)
+        if os.path.exists(candidate):
+            return candidate
+    return None
+
 def getFrameworks(binaryPath: str, verbose: int) -> list[FrameworkInfo]:
     objdump = os.getenv("OBJDUMP", "objdump")
     if verbose:
@@ -199,7 +214,22 @@ def getFrameworks(binaryPath: str, verbose: int) -> list[FrameworkInfo]:
     libraries = []
     for line in lines:
         line = line.replace("@loader_path", os.path.dirname(binaryPath))
+        # Newer Homebrew dylibs (e.g. brotli, pulled in via freetype) reference
+        # their siblings as "@rpath/<name>". Resolve those to a real file so the
+        # existence check in copyFramework() passes, but keep the original
+        # "@rpath/..." string as installName so install_name_tool -change
+        # still matches the reference stored in the Mach-O.
+        rpathName = None
+        stripped = line.strip()
+        if stripped.startswith("@rpath/"):
+            token = stripped.split(" (", 1)[0]
+            resolved = resolveRpath(token, binaryPath)
+            if resolved is not None:
+                rpathName = token
+                line = line.replace(token, resolved)
         info = FrameworkInfo.fromLibraryLine(line.strip())
+        if info is not None and rpathName is not None:
+            info.installName = rpathName
         if info is not None:
             if verbose:
                 print("Found framework:")
