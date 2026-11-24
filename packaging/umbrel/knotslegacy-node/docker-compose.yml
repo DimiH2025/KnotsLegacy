@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # Format: <app-id>_<docker-service-name>_1
+      APP_HOST: knotslegacy-node_datum_1
+      APP_PORT: 7152
+
+  node:
+    image: ghcr.io/dimih2025/knots-legacy-node:29.3.knots20261124
+    restart: on-failure
+    stop_grace_period: 5m
+    user: "1000:1000"
+    ports:
+      # Peer-to-peer. RPC (8332) stays on the internal app network only.
+      - "8333:8333"
+    volumes:
+      - ${APP_DATA_DIR}/data/node:/data
+      - ${APP_DATA_DIR}/data/shared:/shared
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 60s
+      timeout: 10s
+      start_period: 300s
+      retries: 5
+
+  datum:
+    image: ghcr.io/dimih2025/knots-legacy-datum:29.3.knots20261124
+    restart: on-failure
+    user: "1000:1000"
+    depends_on:
+      - node
+    environment:
+      KNOTSLEGACY_RPC_URL: "http://node:8332"
+      # Umbrel derives this once per install and shows it on the app page.
+      DATUM_ADMIN_PASSWORD: ${APP_PASSWORD}
+    ports:
+      # Stratum port for the miners on your network.
+      - "23334:23334"
+    volumes:
+      - ${APP_DATA_DIR}/data/datum:/config
+      - ${APP_DATA_DIR}/data/shared:/shared:ro

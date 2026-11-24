@@ -1,0 +1,42 @@
+manifestVersion: 1
+id: knotslegacy-node
+name: Knots Legacy + DATUM
+tagline: A Bitcoin full node with a DATUM gateway for mining on your own block templates
+category: Bitcoin
+version: "29.3.knots20261124"
+port: 7152
+description: >-
+  Knots Legacy is a Bitcoin full node based on Bitcoin Knots 29.3, built from the
+  last release before RDTS/BIP-110 support was added, and lets
+  you set your own relay policy. This app runs it together with the DATUM
+  gateway from OCEAN, so a home miner can point a rig at this device and mine
+  on a block template built by their own node.
+
+
+  Open the app, sign in to the gateway dashboard with the password shown on the
+  app page, and enter your payout address. Then point your miners at
+  stratum+tcp://<this device>:23334 with any worker name.
+
+
+  Mining at home is a lottery: one rig has a very small chance of finding a
+  block. With DATUM pooled mining, payouts come from the pool according to its
+  rules.
+
+
+  Notes: the first sync downloads the full blockchain and needs a large SSD.
+  This app uses the same network ports as the Bitcoin Node app, so do not run
+  both at the same time. The node keeps its own transaction index, which DATUM
+  needs, so it cannot run pruned.
+developer: Knots Legacy
+website: https://github.com/DimiH2025/KnotsLegacy
+dependencies: []
+repo: https://github.com/DimiH2025/KnotsLegacy
+support: https://github.com/DimiH2025/KnotsLegacy/issues
+gallery: []
+releaseNotes: >-
+  First release of the Knots Legacy and DATUM app, based on Knots Legacy 29.3.knots20261124.
+path: ""
+defaultUsername: ""
+deterministicPassword: true
+submitter: Knots Legacy
+submission: https://github.com/DimiH2025/KnotsLegacy

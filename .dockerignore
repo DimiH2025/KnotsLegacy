@@ -1,0 +1,9 @@
+# Keeps the Docker build context small (used by packaging/docker/knots-legacy-node/Dockerfile).
+.git
+build
+build-*
+**/node_modules
+*.s9pk
+packaging/start9/javascript
+packaging/start9/ncc-cache
+packaging/start9/docker-images

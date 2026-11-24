@@ -1,0 +1,65 @@
+name: Build StartOS package (.s9pk)
+
+# Builds the StartOS package from packaging/start9 for x86_64 and aarch64 and
+# uploads the .s9pk files as downloadable artifacts of the run.
+# Run it by hand: Actions -> "Build StartOS package (.s9pk)" -> Run workflow.
+# Prerequisite: the two container images (docker-images.yml) are already published
+# and public, because the package build pulls them.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86, runner: ubuntu-24.04 }
+          - { target: arm, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: packaging/start9
+    steps:
+      - uses: actions/checkout@v5
+
+      # Node, QEMU, Docker, Buildx and start-cli (from Start9's own actions).
+      - name: Set up build environment
+        uses: Start9Labs/start-technologies/.github/actions/setup-build-env@master
+
+      - name: Install package dependencies
+        run: npm ci
+
+      # s9pk pack needs a signing key and a .startos/ workspace folder.
+      # A throwaway key is enough for test builds.
+      - name: Create a signing key
+        run: |
+          start-cli init-key
+          mkdir -p .startos
+          cp ~/.startos/id.key.pem .startos/build.key.pem
+
+      # Shows the real error if the package folder is incomplete (make hides it).
+      - name: Check package files
+        run: |
+          ls -la
+          start-cli s9pk list-ingredients
+
+      - name: Build (make ${{ matrix.target }})
+        env:
+          # Skip the local formatting step, as Start9's own CI does.
+          FORMAT: "true"
+          FORMAT_CHECK: "true"
+        run: |
+          make ${{ matrix.target }}
+          sha256sum *.s9pk
+
+      - name: Upload the .s9pk
+        uses: actions/upload-artifact@v6
+        with:
+          name: knots-legacy-s9pk-${{ matrix.target }}
+          path: packaging/start9/*.s9pk
+          if-no-files-found: error
